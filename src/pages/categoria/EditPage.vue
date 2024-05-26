@@ -14,6 +14,8 @@
         <div class="q-mt-md">
           <q-btn color="primary" label="Alterar Nome" @click="updateCategoryName" />
         </div>
+        <div v-if="categoryExists" class="text-red">O nome da categória já existe</div>
+          <div v-if="showSuccessMessage" class="text-green">Categoria registada com sucesso</div>
 
       </div>
     </ContainerLink>
@@ -41,7 +43,19 @@ export default {
     })
 
     const updateCategoryName = async () => {
-      console.log('')
+      try {
+        const { db } = await initializeFirebase()
+        const category = {
+          name: this.categoryName
+        }
+
+        const existingCategory = await db.collection('categories')
+          .where('name', '==', category.name)
+          .get()
+        console.log(existingCategory.empty)
+      } catch (error) {
+        console.error('Error registering category: ', error)
+      }
     }
 
     return {
