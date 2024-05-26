@@ -23,7 +23,7 @@
 </template>
 
 <script>
-import { initializeFirebase } from 'src/bootsie/firebase'
+import { initializeFirebase } from 'src/boot/firebase'
 import ContainerLink from 'src/components/ContainerLink.vue'
 import { ref, onMounted } from 'vue'
 import { collection, getDocs } from 'firebase/firestore'
