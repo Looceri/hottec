@@ -9,14 +9,19 @@
       </select>
       <div v-if="selectedCategory">
         <h6>Categoria Selecionada: {{ selectedCategory }}</h6>
-        <!-- Add more content or actions based on the selected category -->
+
+        <input type="text" v-model="selectedCategory" />
+        <div class="q-mt-md">
+          <q-btn color="primary" label="Alterar Nome" @click="updateCategoryName" />
+        </div>
+
       </div>
     </ContainerLink>
   </q-page>
 </template>
 
 <script>
-import { initializeFirebase } from 'src/boot/firebase'
+import { initializeFirebase } from 'src/bootsie/firebase'
 import ContainerLink from 'src/components/ContainerLink.vue'
 import { ref, onMounted } from 'vue'
 import { collection, getDocs } from 'firebase/firestore'
@@ -35,9 +40,14 @@ export default {
       categories.value = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
     })
 
+    const updateCategoryName = async () => {
+      console.log('')
+    }
+
     return {
       categories,
-      selectedCategory
+      selectedCategory,
+      updateCategoryName
     }
   }
 }
