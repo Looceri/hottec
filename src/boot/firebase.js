@@ -1,6 +1,7 @@
 import firebase from 'firebase/compat/app'
 
 import 'firebase/compat/firestore'
+import 'firebase/compat/storage'
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDDtYvK-DPwZW-ncayfVpUOz4cgD6vi0B0',
@@ -19,8 +20,11 @@ export const initializeFirebase = () => {
     const db = firebaseApp.firestore()
     console.log('Firebase Firestore Initialized:', db)
 
+    const storage = firebaseApp.storage()
+    console.log('Firebase Storage Initialized:', storage)
+
     if (firebaseApp && db) {
-      resolve({ firebaseApp, db })
+      resolve({ firebaseApp, db, storage })
     } else {
       reject(new Error('Firebase initialization failed'))
     }

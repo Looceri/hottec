@@ -1,47 +1,44 @@
 <template>
-  <div>
-    <div>
-      <label for="name">Nome:</label>
-      <input type="text" id="name" v-model="technology.name">
-    </div>
-    <div>
-      <label for="brand">Marca:</label>
-      <input type="text" id="brand" v-model="technology.brand">
-    </div>
-    <div>
-      <label for="model">Modelo:</label>
-      <input type="text" id="model" v-model="technology.model">
-    </div>
-    <div>
-      <label for="category">Categoria:</label>
-      <select id="category" v-model="technology.category_id">
-        <option v-for="category in categories" :key="category.id" :value="category.id">
-          {{ category.name }}
-        </option>
-      </select>
-    </div>
-    <div>
-      <label for="price">Preço:</label>
-      <input type="number" id="price" v-model="technology.price">
-    </div>
-    <div>
-      <label for="description">Descrição:</label>
-      <textarea id="description" v-model="technology.description"></textarea>
-    </div>
-    <div>
-      <label for="image">Imagem:</label>
-      <input type="file" id="image" @change="onFileSelected">
-    </div>
-    <div>
-      <label for="stock">Estoque:</label>
-      <input type="number" id="stock" v-model="technology.stock">
-    </div>
-    <!-- Add submit button or other actions here -->
-  </div>
+  <q-page padding>
+    <ContainerLink>
+      <h3>Registar Tecnologias</h3>
+      <div>
+        <q-input v-model="technology.name" label="Nome" />
+        <div class="q-mt-md"></div>
+        <q-input v-model="technology.brand" label="Marca" />
+        <div class="q-mt-md"></div>
+        <q-input v-model="technology.model" label="Modelo" />
+        <div class="q-mt-md"></div>
+        <q-select v-model="technology.category_id" :options="categories" option-value="id" option-label="name"
+          label="Categoria" />
+        <div class="q-mt-md"></div>
+        <q-input v-model="technology.price" label="Preço" type="number" />
+        <div class="q-mt-md"></div>
+        <q-input v-model="technology.description" label="Descrição" type="textarea" />
+        <div class="q-mt-md"></div>
+        <q-input v-model="technology.stock" label="Estoque" type="number" />
+        <div class="q-mt-md"></div>
+        <q-file filled bottom-slots v-model="technology.image" label="Label" counter max-files="12">
+          <template v-slot:before>
+            <q-icon name="folder_open" />
+          </template>
+          <template v-slot:append>
+            <q-btn round dense flat icon="add" @click.stop.prevent />
+          </template>
+        </q-file>
+        <div class="q-mt-md"></div>
+        <q-btn label="Registrar" @click="registerTechnology" />
+      </div>
+    </ContainerLink>
+  </q-page>
 </template>
 
 <script>
+import { initializeFirebase } from 'src/boot/firebase'
+import ContainerLink from 'src/components/ContainerLink.vue'
+
 export default {
+  components: { ContainerLink },
   data () {
     return {
       technology: {
@@ -58,20 +55,53 @@ export default {
     }
   },
   methods: {
-    onFileSelected (event) {
-      this.technology.image = event.target.files[0]
+    async mounted () {
+      try {
+        const { db } = await initializeFirebase()
+        console.log('Firebase database instance:', db)
+
+        const categoriesSnapshot = await db.collection('categories').get()
+        console.log('Categories snapshot:', categoriesSnapshot)
+
+        this.categories = categoriesSnapshot.docs.map(doc => doc.data())
+        console.log('Categories:', this.categories)
+
+        if (this.categories.length === 0) {
+          console.log('The categories array is empty.')
+        } else {
+          console.log('The categories array is not empty.')
+        }
+      } catch (error) {
+        console.error('Error fetching categories: ', error)
+      }
+    },
+    async registerTechnology () {
+      if (!this.technology.name || !this.technology.brand || !this.technology.model || !this.technology.category_id ||
+      !this.technology.price || !this.technology.description || !this.technology.stock || !this.technology.image) {
+        console.error('All fields are required.')
+        return
+      }
+
+      const { db, storage } = await initializeFirebase()
+      const storageRef = storage.ref(`technologies/${this.technology.image.name}`)
+      const uploadTask = storageRef.put(this.technology.image)
+
+      await uploadTask.then(snapshot => snapshot.ref.getDownloadURL())
+        .then(url => {
+          this.technology.image = url
+        })
+        .catch(error => {
+          console.error('Error uploading image:', error)
+        })
+
+      db.collection('technologies').add(this.technology)
+        .then(docRef => {
+          console.log('Technology registered successfully:', docRef.id)
+        })
+        .catch(error => {
+          console.error('Error registering technology:', error)
+        })
     }
-  },
-  created () {
-    // Fetch categories from your backend API
-    // Example using axios:
-    // axios.get('/api/categories')
-    //  .then(response => {
-    //     this.categories = response.data;
-    //   })
-    //  .catch(error => {
-    //     console.error(error);
-    //   });
   }
 }
 </script>

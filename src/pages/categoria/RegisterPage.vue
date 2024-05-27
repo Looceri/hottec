@@ -40,8 +40,10 @@ export default {
     },
     async registerCategory () {
       try {
+        const currentDate = new Date()
         const { db } = await initializeFirebase()
         const category = {
+          id: currentDate.getTime(),
           name: this.categoryName
         }
 
