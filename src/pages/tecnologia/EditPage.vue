@@ -121,8 +121,9 @@ export default {
   },
   mounted () {
     initializeFirebase()
-      .then(({ db }) => {
+      .then(({ db, storage }) => {
         this.db = db
+        this.storage = storage
         this.fetchTechnologies()
         this.fetchCategories()
       })
@@ -156,6 +157,13 @@ export default {
     },
     async saveTechnology () {
       try {
+        if (this.editingTechnology.image instanceof File) {
+          const storageRef = this.storage.ref()
+          const fileRef = storageRef.child(`technologies/${this.editingTechnology.id}`)
+          const snapshot = await fileRef.put(this.editingTechnology.image)
+          this.editingTechnology.image = await snapshot.ref.getDownloadURL()
+        }
+
         await this.db.collection('technologies').doc(this.editingTechnology.id).update(this.editingTechnology)
         this.editDialog = false
         await this.fetchTechnologies()
@@ -173,6 +181,10 @@ export default {
     },
     onFileChange (event) {
       this.editingTechnology.image = event.target.files[0]
+    },
+    formattedPrice (price) {
+      // You can use Intl.NumberFormat for currency formatting
+      return new Intl.NumberFormat('pt-pt', { style: 'currency', currency: 'MZN' }).format(price)
     }
   }
 }
