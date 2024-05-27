@@ -1,69 +1,41 @@
 <template>
   <q-page padding>
-    <ContainerLink>
-      <h3>Lista de Tecnologias</h3>
-      <q-table
-        title="Tecnologias"
-        :rows="technologies"
-        :columns="columns"
-        row-key="id"
-        :loading="isLoading"
-        :pagination="{ rowsPerPage: 10 }"
-      >
-        <template v-slot:body="props">
-          <q-tr :props="props">
-            <q-td key="name" :props="props">
-              {{ props.row.name }}
-            </q-td>
-            <q-td key="brand" :props="props">
-              {{ props.row.brand }}
-            </q-td>
-            <q-td key="model" :props="props">
-              {{ props.row.model }}
-            </q-td>
-            <q-td key="category" :props="props">
-              {{ props.row.category_id.name }}
-            </q-td>
-            <q-td key="price" :props="props">
-              {{ formattedPrice(props.row.price) }}
-            </q-td>
-            <q-td key="stock" :props="props">
-              {{ props.row.stock }}
-            </q-td>
-            <q-td key="image" :props="props">
-              <q-img
-                :src="props.row.image"
-                :ratio="16/9"
-                spinner-color="primary"
-                style="max-width: 100px; max-height: 100px;"
-              />
-            </q-td>
-          </q-tr>
-        </template>
-      </q-table>
-    </ContainerLink>
+    <div class="row q-gutter-md">
+      <q-card v-for="(technology, index) in technologies" :key="index" class="col-12 col-md-4">
+        <q-card-section>
+          <q-img
+            :src="technology.image"
+            :ratio="16/9"
+            spinner-color="primary"
+            style="max-width: 100%; max-height: 200px;"
+          />
+        </q-card-section>
+        <q-card-section class="q-pa-sm">
+          <div class="text-h6">{{ technology.name }}</div>
+          <div class="text-subtitle1">Marca: {{ technology.brand }}</div>
+          <div class="text-subtitle1">Modelo: {{ technology.model }}</div>
+          <div class="text-subtitle1">Categoria: {{ technology.category_id.name }}</div>
+          <div class="text-subtitle1">Preço: {{ formattedPrice(technology.price) }}</div>
+          <div class="text-subtitle1">Estoque: {{ technology.stock }}</div>
+        </q-card-section>
+        <q-card-actions align="right">
+          <!-- <q-btn flat round icon="shopping_cart" @click="addToCart(technology)">
+            Adicionar ao Carrinho
+          </q-btn> -->
+        </q-card-actions>
+      </q-card>
+    </div>
   </q-page>
 </template>
 
 <script>
 import { initializeFirebase } from 'src/boot/firebase'
-import ContainerLink from 'src/components/ContainerLink.vue'
 
 export default {
-  components: { ContainerLink },
   data () {
     return {
       technologies: [],
       isLoading: true,
-      columns: [
-        { name: 'name', align: 'left', label: 'Nome', field: 'name' },
-        { name: 'brand', align: 'left', label: 'Marca', field: 'brand' },
-        { name: 'model', align: 'left', label: 'Modelo', field: 'model' },
-        { name: 'category', align: 'left', label: 'Categoria', field: 'category' },
-        { name: 'price', align: 'left', label: 'Preço', field: 'price', format: val => new Intl.NumberFormat('pt-pt', { style: 'currency', currency: 'MZN' }).format(val) },
-        { name: 'stock', align: 'left', label: 'Estoque', field: 'stock' },
-        { name: 'image', align: 'center', label: 'Imagem', field: 'image' }
-      ],
       db: null
     }
   },
@@ -90,15 +62,15 @@ export default {
       }
     },
     formattedPrice (price) {
-      // You can use Intl.NumberFormat for currency formatting
-      return new Intl.NumberFormat('pt-pt', { style: 'currency', currency: 'MZN' }).format(price)
+      return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'MZN' }).format(price)
+    },
+    addToCart (technology) {
+      // Implementar a lógica para adicionar a tecnologia ao carrinho
+      console.log('Adicionando tecnologia ao carrinho:', technology)
     }
   }
 }
 </script>
 
 <style scoped>
-.q-table {
-  width: 100%;
-}
 </style>
