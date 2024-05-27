@@ -1,7 +1,7 @@
 <template>
   <q-page padding>
     <ContainerLink>
-      <h3>Registar Tecnologias</h3>
+      <h3>Registrar Tecnologias</h3>
       <div>
         <q-input v-model="technology.name" label="Nome" />
         <div class="q-mt-md"></div>
@@ -9,8 +9,7 @@
         <div class="q-mt-md"></div>
         <q-input v-model="technology.model" label="Modelo" />
         <div class="q-mt-md"></div>
-        <q-select v-model="technology.category_id" :options="categories" option-value="id" option-label="name"
-          label="Categoria" />
+        <q-select v-model="technology.category_id" :options="categories" option-value="id" option-label="name" label="Categoria" />
         <div class="q-mt-md"></div>
         <q-input v-model="technology.price" label="Preço" type="number" />
         <div class="q-mt-md"></div>
@@ -18,14 +17,7 @@
         <div class="q-mt-md"></div>
         <q-input v-model="technology.stock" label="Estoque" type="number" />
         <div class="q-mt-md"></div>
-        <q-file filled bottom-slots v-model="technology.image" label="Label" counter max-files="12">
-          <template v-slot:before>
-            <q-icon name="folder_open" />
-          </template>
-          <template v-slot:append>
-            <q-btn round dense flat icon="add" @click.stop.prevent />
-          </template>
-        </q-file>
+        <q-file filled bottom-slots @click="onFileChange" v-model="technology.image" label="Imagem" />
         <div class="q-mt-md"></div>
         <q-btn label="Registrar" @click="registerTechnology" />
       </div>
@@ -48,59 +40,67 @@ export default {
         category_id: '',
         price: '',
         description: '',
-        image: null,
+        image: null, // Use null for the image initially
         stock: ''
       },
-      categories: [] // Fetch categories from your backend API
+      categories: [],
+      db: null, // Store the database instance
+      storage: null // Store the storage instance
     }
   },
   methods: {
-    async mounted () {
-      try {
-        const { db } = await initializeFirebase()
-        console.log('Firebase database instance:', db)
-
-        const categoriesSnapshot = await db.collection('categories').get()
-        console.log('Categories snapshot:', categoriesSnapshot)
-
-        this.categories = categoriesSnapshot.docs.map(doc => doc.data())
-        console.log('Categories:', this.categories)
-
-        if (this.categories.length === 0) {
-          console.log('The categories array is empty.')
-        } else {
-          console.log('The categories array is not empty.')
-        }
-      } catch (error) {
-        console.error('Error fetching categories: ', error)
-      }
+    onFileChange (event) {
+      this.technology.image = event.target.files[0]
     },
     async registerTechnology () {
-      if (!this.technology.name || !this.technology.brand || !this.technology.model || !this.technology.category_id ||
-      !this.technology.price || !this.technology.description || !this.technology.stock || !this.technology.image) {
-        console.error('All fields are required.')
+      // Validação de campos obrigatórios
+      const hasRequiredFields = Object.values(this.technology).every(field => field !== '' && field !== null)
+      if (!hasRequiredFields || !this.technology.image) {
+        alert('Por favor, preencha todos os campos obrigatórios.')
         return
       }
 
+      try {
+        // Upload da imagem
+        const storageRef = this.storage.ref(`technologies/${this.technology.image.name}`)
+        const uploadTaskSnapshot = await storageRef.put(this.technology.image)
+        const imageUrl = await uploadTaskSnapshot.ref.getDownloadURL()
+
+        // Atualiza a URL da imagem
+        this.technology.image = imageUrl
+
+        // Adiciona a tecnologia ao Firestore
+        await this.db.collection('technologies').add(this.technology)
+
+        alert('Tecnologia registrada com sucesso!')
+
+        // Limpa os campos do formulário
+        this.technology = {
+          name: '',
+          brand: '',
+          model: '',
+          category_id: '',
+          price: '',
+          description: '',
+          image: null,
+          stock: ''
+        }
+      } catch (error) {
+        console.error('Erro ao registrar tecnologia:', error)
+        alert('Erro ao registrar tecnologia. Por favor, tente novamente.')
+      }
+    }
+  },
+  async mounted () {
+    try {
       const { db, storage } = await initializeFirebase()
-      const storageRef = storage.ref(`technologies/${this.technology.image.name}`)
-      const uploadTask = storageRef.put(this.technology.image)
+      this.db = db
+      this.storage = storage
 
-      await uploadTask.then(snapshot => snapshot.ref.getDownloadURL())
-        .then(url => {
-          this.technology.image = url
-        })
-        .catch(error => {
-          console.error('Error uploading image:', error)
-        })
-
-      db.collection('technologies').add(this.technology)
-        .then(docRef => {
-          console.log('Technology registered successfully:', docRef.id)
-        })
-        .catch(error => {
-          console.error('Error registering technology:', error)
-        })
+      const categoriesSnapshot = await db.collection('categories').get()
+      this.categories = categoriesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    } catch (error) {
+      console.error('Erro ao buscar categorias: ', error)
     }
   }
 }
